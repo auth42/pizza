@@ -88,7 +88,7 @@ const callPizzaOrderApi = async (cart, callback) => {
     if(!userDetails.email_verified) {
       Swal.fire({
         title: 'Verify your email',
-        html: '<b>We have sent you a verification email.</b><br>Check your inbox and verify your email via the link in the email. <br>Once you have verified, reload the page and try again.',
+        html: '<b>We have sent you a verification email.</b><br>Check your inbox and verify your email via the link in the email. <br><br>Once you have verified, reload the page and try again.',
       confirmButtonText: "Okay",
       customClass: {
           confirmButton: 'btn btn-warning'
@@ -106,16 +106,22 @@ const callPizzaOrderApi = async (cart, callback) => {
       },
       body: JSON.stringify(cart)
     })
+    .then( response => {
+      if (!response.ok) { throw response }
+      return response.json()
+    })
     .then(result => {
-      if(result.status != 200 && result.statusText == "Forbidden") {
-        callback(false, "Not enough permissions. Login again and grant all permissions to place order.<br><span class='btn btn-warning' onclick='login()'>Login again</span>");
-        return;
-      }
       console.log('Success:', result);
       callback(true, result);
     })
     .catch(error => {
-      callback(false, error);
+      if(error.status != 200 && error.statusText == "Forbidden") {
+        callback(false, "Not enough permissions. Login again and grant all permissions to place order.<br><span class='btn btn-warning' onclick='login()'>Login again</span>");
+        return;
+      }
+      error.text().then( errorMessage => {
+        callback(false, errorMessage);
+      })
     });
   } catch (e) {
     console.error(e);

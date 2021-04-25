@@ -49,8 +49,13 @@ app.post("/api/orders", checkJwt, checkScopesForOrder, (req, res) => {
       console.log("Error", err);
     }
     var appMetadata = userData.app_metadata;
-    console.log("Current app metadata:", appMetadata);
-    console.log("New order", req.body);
+    console.log("Current user metadata:", userData);
+    //console.log("Current app metadata:", appMetadata);
+    //console.log("New order", req.body);
+    if(!userData.email_verified) {
+      //Email not verified. Cannot place order
+      res.status(401).send("Email address not verified");
+    }
     if(!appMetadata)
       appMetadata = {};
     if(!appMetadata.orders)
@@ -65,7 +70,10 @@ app.post("/api/orders", checkJwt, checkScopesForOrder, (req, res) => {
       }
       // Updated user.
       console.log(user);
-      res.send("Order created")
+      res.send({
+        success: true,
+        message: "Order created"
+      });
     });
   });
 });
