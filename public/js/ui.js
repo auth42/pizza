@@ -122,6 +122,7 @@ const showCart = () => {
         swal.fire("Cart is empty", "", "warning");
         return;
       }
+      setTimeout(() => {Swal.showLoading()}, 200);
       callPizzaOrderApi(cart, (success, response) => {
         if(success) {
           Swal.fire('Order placed', '', 'success')
