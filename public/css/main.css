@@ -9,3 +9,38 @@ label {
 .navbar {
   min-height: 115px;
 }
+
+.cart .pizza-item .img {
+  width: 120px;
+  height: 120px;
+  display: inline-block !important;
+}
+.cart .pizza-item .description {
+  display: none;
+}
+.cart .pizza-item .order-button {
+  display: none;
+}
+
+.cart .pizza-item {
+  margin: 5px auto;
+}
+
+.cart .pizza-item .text{
+  width: 70%;
+  text-align: left;
+  background: #eee;
+  height: 120px;
+}
+
+.cart .pizza-title {
+  color: #333 !important;
+}
+
+.cart .price span {
+  color: #555 !important;
+}
+.cart-action-btn {
+  margin: 0px 10px;
+  font-size: large;
+}

@@ -84,6 +84,94 @@ const updateUI = async () => {
   console.log("UI updated");
 };
 
+const addPizzaToCart = (pizzaItem) => {
+  var cart = getCart();
+  var pizzaObj = {
+    pizzaId: pizzaItem.data('pizza-id'),
+    title: pizzaItem.find('.pizza-title').text(),
+    price: pizzaItem.find('.price span').text(),
+  }
+  cart.push(pizzaObj);
+  localStorage.setItem('cart', JSON.stringify(cart));
+  renderCart();
+  showCart();
+}
+
+const showCart = () => {
+  var cartContent = $('#cartContent');
+  Swal.fire({
+    customClass: {
+      content: 'cart',
+      confirmButton: 'btn btn-lg btn-warning cart-action-btn',
+      cancelButton: 'btn btn-lg btn-default cart-action-btn'
+    },
+    buttonsStyling: false,
+    title: '<strong>Cart</strong>',
+    html: cartContent.html(),
+    showCloseButton: true,
+    showCancelButton: true,
+    focusConfirm: false,
+    confirmButtonText:
+      'Place Order',
+    cancelButtonText:
+      'Add more items',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      callPizzaOrderApi(getCart(), (success, response) => {
+        if(success) {
+          Swal.fire('Order placed', '', 'success')
+        } else {
+          Swal.fire('Sorry!', response, 'error')
+        }
+      });
+    } else if (result.isDenied) {
+      Swal.fire('Changes are not saved', '', 'info')
+    }
+  })
+}
+
+const getCart = () => {
+  var cart = localStorage.getItem('cart') ? JSON.parse(localStorage.getItem('cart')) : [];
+  return cart;
+}
+const renderCart = () => {
+  var cartContent = $('#cartContent');
+  var cart = getCart();
+  cartContent.html(cart.length ? '' : 'Your cart is empty');
+  cart.forEach((item) => {
+    cartContent.append(_.template($('#cartItemTemplate').html())(item));
+  });
+  $('#cartItemsCount').text(cart.length);
+}
+(async () => {
+  renderCart();
+  $('#viewCartBtn').click( () => {
+    showCart();
+    return false;
+  })
+  $('.order-button').click(async (e) => {
+    var pizzaItem = $(e.target).parents('.pizza-item');
+    console.log(pizzaItem);
+    const isAuthenticated = await auth0.isAuthenticated();
+    if(!isAuthenticated) {
+      swal.fire({
+        title: "Login or signup to order",
+        confirmButtonText: "Login/Signup",
+        customClass: {
+          confirmButton: 'btn btn-lg btn-warning cart-action-btn'
+        },
+        buttonsStyling: false}).then((result) => {
+          if (result.isConfirmed) {
+            return login();
+          }
+      });
+    } else {
+      addPizzaToCart(pizzaItem);
+    }
+    return false;
+  });
+})();
+
 window.onpopstate = (e) => {
   if (e.state && e.state.url && router[e.state.url]) {
     showContentFromUrl(e.state.url);

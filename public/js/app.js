@@ -1,16 +1,22 @@
 // The Auth0 client, initialized in configureClient()
 let auth0 = null;
+let defaultScope = 'openid profile email create:orders';
 
 /**
  * Starts the authentication flow
  */
-const login = async (targetUrl) => {
+const login = async (targetUrl, signup) => {
+  signup = signup ? signup : false;
   try {
     console.log("Logging in", targetUrl);
 
     const options = {
-      redirect_uri: window.location.origin
+      redirect_uri: window.location.origin,
+      scope: defaultScope,
     };
+    if(signup) {
+      options.screen_hint = 'signup';
+    }
 
     if (targetUrl) {
       options.appState = { targetUrl };
@@ -50,7 +56,8 @@ const configureClient = async () => {
 
   auth0 = await createAuth0Client({
     domain: config.domain,
-    client_id: config.clientId
+    client_id: config.clientId,
+    audience: config.audience
   });
 };
 
@@ -72,24 +79,44 @@ const requireAuth = async (fn, targetUrl) => {
 /**
  * Calls the API endpoint with an authorization token
  */
-const callPizzaOrderApi = async () => {
+const callPizzaOrderApi = async (cart, callback) => {
   try {
-    const token = await auth0.getTokenSilently();
-
-    const response = await fetch("/api/external", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+    const token = await auth0.getTokenSilently({
+      scope: defaultScope
     });
+    const userDetails = await auth0.getUser();
+    if(!userDetails.email_verified) {
+      Swal.fire({
+        title: 'Verify your email',
+        html: '<b>We have sent you a verification email.</b><br>Check your inbox and verify your email via the link in the email. <br>Once you have verified, reload the page and try again.',
+      confirmButtonText: "Okay",
+      customClass: {
+          confirmButton: 'btn btn-warning'
+        },
+      buttonsStyling: false
+      })
+      return;
+    }
 
-    const responseData = await response.json();
-    const responseElement = document.getElementById("api-call-result");
-
-    responseElement.innerText = JSON.stringify(responseData, {}, 2);
-
-    document.querySelectorAll("pre code").forEach(hljs.highlightBlock);
-
-    eachElement(".result-block", (c) => c.classList.add("show"));
+    await fetch("/api/orders", {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(cart)
+    })
+    .then(result => {
+      if(result.status != 200 && result.statusText == "Forbidden") {
+        callback(false, "Not enough permissions. Login again and grant all permissions to place order.<br><span class='btn btn-warning' onclick='login()'>Login again</span>");
+        return;
+      }
+      console.log('Success:', result);
+      callback(true, result);
+    })
+    .catch(error => {
+      callback(false, error);
+    });
   } catch (e) {
     console.error(e);
   }
