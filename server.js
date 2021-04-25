@@ -79,7 +79,7 @@ app.post("/api/orders", checkJwt, checkScopesForOrder, (req, res) => {
 });
 
 app.get("/", (_, res) => {
-  res.sendFile(join(__dirname, "index1.html"));
+  res.sendFile(join(__dirname, "index.html"));
 });
 
 process.on("SIGINT", function() {
