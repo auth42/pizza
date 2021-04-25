@@ -7,12 +7,13 @@ const jwt = require("express-jwt");
 const jwtAuthz = require('express-jwt-authz');
 const jwksRsa = require("jwks-rsa");
 const authConfig = require("./auth_config.json");
+require('dotenv').config()
 var ManagementClient = require('auth0').ManagementClient;
 
 var auth0Management = new ManagementClient({
   domain: 'jithesh.au.auth0.com',
   clientId: 'VwhUVSIruKQGXrfniPVUKjpUwttj9Alf',
-  clientSecret: 'XZihGQGpeKd2wMVTje8xcpflh1S6STgJZ3wB_s0W18popWobgpmZOwzpFdy7e6HU'
+  clientSecret: process.env.auth0_client_secret
 });
 
 app.use(express.urlencoded());
@@ -47,6 +48,8 @@ app.post("/api/orders", checkJwt, checkScopesForOrder, (req, res) => {
     if (err) {
       // handle error.
       console.log("Error", err);
+      res.status(401).send("Error getting user data");
+      return;
     }
     var appMetadata = userData.app_metadata;
     console.log("Current user metadata:", userData);
@@ -67,6 +70,8 @@ app.post("/api/orders", checkJwt, checkScopesForOrder, (req, res) => {
     auth0Management.updateAppMetadata({id: req.user.sub}, appMetadata, function (err, user) {
       if (err) {
         console.log("Error", err);
+        res.status(401).send("Error updating user data");
+        return;
       }
       // Updated user.
       console.log(user);
