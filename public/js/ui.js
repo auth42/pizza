@@ -114,18 +114,28 @@ const showCart = () => {
     confirmButtonText:
       'Place Order',
     cancelButtonText:
-      'Add more items',
+      'Clear cart',
   }).then((result) => {
     if (result.isConfirmed) {
-      callPizzaOrderApi(getCart(), (success, response) => {
+      var cart = getCart();
+      if(!cart.length) {
+        swal.fire("Cart is empty", "", "warning");
+        return;
+      }
+      callPizzaOrderApi(cart, (success, response) => {
         if(success) {
           Swal.fire('Order placed', '', 'success')
+          clearCart();
+          renderCart();
         } else {
           Swal.fire('Sorry!', response, 'error')
         }
       });
-    } else if (result.isDenied) {
-      Swal.fire('Changes are not saved', '', 'info')
+    } else if (result.isDismissed && result.dismiss == "cancel") {
+      //Clear cart
+      clearCart();
+      renderCart();
+      showCart();
     }
   })
 }
@@ -133,6 +143,9 @@ const showCart = () => {
 const getCart = () => {
   var cart = localStorage.getItem('cart') ? JSON.parse(localStorage.getItem('cart')) : [];
   return cart;
+}
+const clearCart = () => {
+  localStorage.setItem('cart', JSON.stringify([]));
 }
 const renderCart = () => {
   var cartContent = $('#cartContent');
