@@ -21,7 +21,15 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use(helmet());
 app.use(express.static(join(__dirname, "public")));
+app.enable('trust proxy')
+app.use(function(request, response, next) {
 
+  if (process.env.NODE_ENV != 'development' && !request.secure) {
+     return response.redirect("https://" + request.headers.host + request.url);
+  }
+
+  next();
+})
 // create the JWT middleware
 const checkJwt = jwt({
   secret: jwksRsa.expressJwtSecret({
